@@ -167,6 +167,65 @@
     }, 1500)
   </script> -->
   <script>
+var TIME_STAMP = new Date().getTime();
+
+// 随机DOM 有图/无图
+
+// Class GetData
+function GetData() {
+  // Collect template nodes to be cloned when needed.
+  this.tombstone_ = document.querySelector("#templates > .chat-item.tombstone");
+  this.messageTemplate_ = document.querySelector("#templates > .chat-item:not(.tombstone)");
+  this.nextItem_ = 0;
+}
+
+GetData.prototype = {
+  fetch: function(count) {
+    // Fetch at least 30 or count more objects for display.
+    count = Math.max(30, count);
+    return new Promise(function(resolve, reject) {
+      // Assume 50 ms per item.
+      setTimeout(function() {
+        var items = [];
+        for (var i = 0; i < Math.abs(count); i++) {
+          items[i] = getItem(this.nextItem_++);
+        }
+        resolve(Promise.all(items));
+      }.bind(this), 1000 /* Simulated 1 second round trip time */ );
+    }.bind(this));
+  },
+
+  createTombstone: function() {
+    return this.tombstone_.cloneNode(true);
+  },
+
+  render: function(item, div) {
+    // TODO: Different style?
+    div = div || this.messageTemplate_.cloneNode(true);
+    div.dataset.id = item.id;
+    div.querySelector('.avatar').src = 'images/avatar' + item.avatar + '.jpg';
+    div.querySelector('.bubble p').textContent = item.message;
+    div.querySelector('.bubble .posted-date').textContent = item.time.toString();
+
+    var img = div.querySelector('.bubble img');
+    if(item.image !== '') {
+      img.classList.remove('invisible');
+      img.src = item.image.src;
+      img.width = item.image.width;
+      img.height = item.image.height;
+    } else {
+      img.src = '';
+      img.classList.add('invisible');
+    }
+
+    if(item.self) {
+      div.classList.add('from-me');
+    } else {
+      div.classList.remove('from-me');
+    }
+    return div;
+  },
+};
 
   </script>
 </body>
