@@ -124,14 +124,16 @@
   <!-- 有消费记录时 -->
   <div class="list">
     <ul>
-      <li>
-        <div class="item-left">
-          <p>第4章 惺惺惜惺惺想寻</p>
-          <em>一言通天</em>
-          <div><span>2017-09-14</span>&nbsp&nbsp<span>12:40:56</span></div>
-        </div>
-        <div class="item-right">-100书币</div>
-      </li>
+      <div id="templates">
+        <li class="item" data-id="{{id}}">
+          <div class="item-left">
+            <p>第4章 惺惺惜惺惺想寻</p>
+            <em>一言通天</em>
+            <div><span>2017-09-14</span>&nbsp&nbsp<span>12:40:56</span></div>
+          </div>
+          <div class="item-right">-100书币</div>
+        </li>
+      </div>
     </ul>
     <!-- 和即将插入dom的node同级 -->
     <div id="infinite">
@@ -141,6 +143,12 @@
 
   <!-- 没有消费记录时 -->
   <img class="no-list" src="img/05_03.png" alt="">
+
+  <!-- new wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww -->
+  <div class="list">
+    <ul id="timeline">
+    </ul>
+  </div>
 
   <script src="js/promise-polyfill.js"></script>
   <script src="js/global.js"></script>
@@ -169,13 +177,48 @@
   <script>
 var TIME_STAMP = new Date().getTime();
 
-// 随机DOM 有图/无图
+/**
+ * Constructs a random item with a given id.
+ * @param {number} id An identifier for the item.
+ * @return {Object} A randomly generated item.
+ */
+/** 随机DOM 有图/无图 **/
+function pickItem(id) {
+  function pickRandom(a) {
+    return a[Math.floor(Math.random() * a.length)];
+  }
+
+  return new Promise(function(resolve) {
+    // 随机模板内容
+    var item = {
+      id: id,
+      avatar: Math.floor(Math.random()*NUM_AVATARS),
+      self: Math.random() < 0.1,
+      image: Math.random() < 1.0 / 20 ? Math.floor(Math.random()*NUM_IMAGES) : '',
+      time: new Date(Math.floor(TIME_STAMP + id*20*1000 + Math.random()*20*1000)),
+      message: pickRandom(MESSAGES)
+    }
+    if(item.image === '') {
+      resolve(item);
+    }
+    var image = new Image();
+    image.src = 'images/image' + item.image + '.jpg';
+    image.addEventListener('load', function() {
+      item.image = image;
+      resolve(item);
+    });
+    image.addEventListener('error', function() {
+      item.image = '';
+      resolve(item);
+    });
+  });
+}
 
 // Class GetData
 function GetData() {
   // Collect template nodes to be cloned when needed.
-  this.tombstone_ = document.querySelector("#templates > .chat-item.tombstone");
-  this.messageTemplate_ = document.querySelector("#templates > .chat-item:not(.tombstone)");
+  // this.tombstone_ = document.querySelector("#templates > .chat-item.tombstone");
+  this.messageTemplate_ = document.querySelector("#templates > .item");
   this.nextItem_ = 0;
 }
 
@@ -188,7 +231,7 @@ GetData.prototype = {
       setTimeout(function() {
         var items = [];
         for (var i = 0; i < Math.abs(count); i++) {
-          items[i] = getItem(this.nextItem_++);
+          items[i] = pickItem(this.nextItem_++);
         }
         resolve(Promise.all(items));
       }.bind(this), 1000 /* Simulated 1 second round trip time */ );
@@ -196,10 +239,12 @@ GetData.prototype = {
   },
 
   createTombstone: function() {
-    return this.tombstone_.cloneNode(true);
+    console.log('render tombstone')
+    return this.messageTemplate_.cloneNode(true);
   },
 
   render: function(item, div) {
+    console.log('render: ', item)
     // TODO: Different style?
     div = div || this.messageTemplate_.cloneNode(true);
     div.dataset.id = item.id;
@@ -226,6 +271,14 @@ GetData.prototype = {
     return div;
   },
 };
+
+document.addEventListener('DOMContentLoaded', function() {
+  window.scroller =
+    new InfiniteScroller(
+      document.querySelector('#timeline'),
+      new GetData()
+    );
+});
 
   </script>
 </body>
