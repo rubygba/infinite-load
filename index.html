@@ -20,6 +20,7 @@
   <title>消费记录</title>
   <!-- <link rel="stylesheet" href="css/index.css"> -->
   <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/item.css">
   <script>
     (function(doc, win) {
       var docEl = doc.documentElement,
@@ -51,50 +52,6 @@
       background: #fff;
     }
 
-    .list ul li {
-      height: 1.62rem;
-      border-bottom: 1px solid #e7e7e7;
-      padding: 0 0.24rem 0 0.24rem;
-      color: #333;
-      overflow: hidden;
-    }
-
-    .list ul li .item-left {
-      float: left;
-    }
-
-    .list ul li .item-left p {
-      font-size: 0.32rem;
-      padding-top: 0.2rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      line-height: 0.4rem;
-      margin-bottom: .1rem;
-    }
-
-    .list ul li .item-left em {
-      display: block;
-      font-size: 0.26rem;
-      line-height: 0.36rem;
-      color: #666;
-      margin-bottom: .1rem;
-    }
-
-    .list ul li .item-left div {
-      color: #999;
-      font-size: 0.24rem;
-      line-height: 0.3rem;
-      /* padding-bottom: 0.24rem; */
-    }
-
-    .list ul li .item-right {
-      float: right;
-      font-size: 0.32rem;
-      color: #13ccd8;
-      line-height: 1.6rem;
-    }
-
     .no-list {
       height: 2.16rem;
       width: 1.89rem;
@@ -121,8 +78,35 @@
 </head>
 
 <body>
+  <div id="temp">
+    <li class="item-novel">
+      <div class="item-left">
+        <p>第4章 惺惺惜惺惺想寻</p>
+        <em>一言通天</em>
+        <div><span>2017-09-14</span>&nbsp&nbsp<span>12:40:56</span></div>
+      </div>
+      <div class="item-right">-100书币</div>
+    </li>
+    <li class="item-news"></li>
+    <li class="item-novel tombstone">
+      <img class="cover" src="" alt="" width="100" height="200">
+      <div class="desc">
+        <p></p>
+        <p></p>
+        <p></p>
+      </div>
+      <div class="meta">
+        <time class="posted-date"></time>
+      </div>
+    </li>
+    <li class="item-news tombstone">
+      <!-- TODO: -->
+    </li>
+  </div>
+  <ul id="chat-timeline"></ul>
+
   <!-- 有消费记录时 -->
-  <div class="list">
+  <!-- <div class="list">
     <ul>
       <li>
         <div class="item-left">
@@ -133,14 +117,12 @@
         <div class="item-right">-100书币</div>
       </li>
     </ul>
-    <!-- 和即将插入dom的node同级 -->
     <div id="infinite">
       <div class="infinite-img"><img class="hide" src="img/loading.gif" alt=""></div>
     </div>
-  </div>
-
+  </div> -->
   <!-- 没有消费记录时 -->
-  <img class="no-list" src="img/05_03.png" alt="">
+  <!-- <img class="no-list" src="img/05_03.png" alt=""> -->
 
   <script src="js/promise-polyfill.js"></script>
   <script src="js/global.js"></script>
@@ -167,15 +149,52 @@
     }, 1500)
   </script> -->
   <script>
-var TIME_STAMP = new Date().getTime();
+var INIT_TIME = new Date().getTime();
 
 // 随机DOM 有图/无图
+/**
+ * Constructs a random item with a given id.
+ * @param {number} id An identifier for the item.
+ * @return {Object} A randomly generated item.
+ */
+function randomItem(id) {
+  function pickRandom(a) {
+      return a[Math.floor(Math.random() * a.length)];
+  }
+
+  return new Promise(function(resolve) {
+    var item = {
+      id: id,
+      avatar: Math.floor(Math.random()*NUM_AVATARS),
+      self: Math.random() < 0.1,
+      image: Math.random() < 1.0 / 20 ? Math.floor(Math.random()*NUM_IMAGES) : '',
+      time: new Date(Math.floor(INIT_TIME + id*20*1000 + Math.random()*20*1000)),
+      message: pickRandom(MESSAGES)
+    }
+    // if(item.image === '') {
+    //   resolve(item);
+    // }
+    // var image = new Image();
+    // image.src = 'images/image' + item.image + '.jpg';
+    // image.addEventListener('load', function() {
+    //   item.image = image;
+    //   resolve(item);
+    // });
+    // image.addEventListener('error', function() {
+    //   item.image = '';
+    //   resolve(item);
+    // });
+    resolve(item)
+  });
+}
 
 // Class GetData
 function GetData() {
   // Collect template nodes to be cloned when needed.
-  this.tombstone_ = document.querySelector("#templates > .chat-item.tombstone");
-  this.messageTemplate_ = document.querySelector("#templates > .chat-item:not(.tombstone)");
+  // this.tombstone_ = document.querySelector("#templates > .chat-item.tombstone");
+  // this.messageTemplate_ = document.querySelector("#templates > .chat-item:not(.tombstone)");
+  this.tombstone_ = document.querySelector("#temp > .item-novel.tombstone");
+  this.messageTemplate_ = document.querySelector("#temp > .item-novel:not(.tombstone)");
   this.nextItem_ = 0;
 }
 
@@ -188,7 +207,7 @@ GetData.prototype = {
       setTimeout(function() {
         var items = [];
         for (var i = 0; i < Math.abs(count); i++) {
-          items[i] = getItem(this.nextItem_++);
+          items[i] = randomItem(this.nextItem_++);
         }
         resolve(Promise.all(items));
       }.bind(this), 1000 /* Simulated 1 second round trip time */ );
@@ -203,22 +222,24 @@ GetData.prototype = {
     // TODO: Different style?
     div = div || this.messageTemplate_.cloneNode(true);
     div.dataset.id = item.id;
-    div.querySelector('.avatar').src = 'images/avatar' + item.avatar + '.jpg';
-    div.querySelector('.bubble p').textContent = item.message;
-    div.querySelector('.bubble .posted-date').textContent = item.time.toString();
+    // 填充内容
+    // div.querySelector('.avatar').src = 'images/avatar' + item.avatar + '.jpg';
+    // div.querySelector('.bubble p').textContent = item.message;
+    // div.querySelector('.bubble .posted-date').textContent = item.time.toString();
 
-    var img = div.querySelector('.bubble img');
-    if(item.image !== '') {
-      img.classList.remove('invisible');
-      img.src = item.image.src;
-      img.width = item.image.width;
-      img.height = item.image.height;
-    } else {
-      img.src = '';
-      img.classList.add('invisible');
-    }
+    // 聊天内容是否有图
+    // var img = div.querySelector('.bubble img');
+    // if (item.image !== '') {
+    //   img.classList.remove('invisible');
+    //   img.src = item.image.src;
+    //   img.width = item.image.width;
+    //   img.height = item.image.height;
+    // } else {
+    //   img.src = '';
+    //   img.classList.add('invisible');
+    // }
 
-    if(item.self) {
+    if (item.self) {
       div.classList.add('from-me');
     } else {
       div.classList.remove('from-me');
@@ -227,6 +248,28 @@ GetData.prototype = {
   },
 };
 
+document.addEventListener('DOMContentLoaded', function() {
+  window.scroller =
+    new InfiniteScroller(
+      document.querySelector('#chat-timeline'),
+      new GetData()
+    );
+
+  // var stats = new Stats();
+  // var domPanel = new Stats.Panel('DOM Nodes', '#0ff', '#002');
+  // stats.addPanel(domPanel);
+  // stats.showPanel(3);
+  // document.body.appendChild(stats.dom);
+  // var TIMEOUT = 100;
+  // setTimeout(function timeoutFunc() {
+  //   // Only update DOM node graph when we have time to spare to call
+  //   // numDomNodes(), which is a fairly expensive function.
+  //   requestIdleCallback(function() {
+  //     domPanel.update(numDomNodes(document.body), 1500);
+  //     setTimeout(timeoutFunc, TIMEOUT);
+  //   });
+  // }, TIMEOUT);
+});
   </script>
 </body>
 
