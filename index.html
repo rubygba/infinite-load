@@ -89,14 +89,15 @@
     </li>
     <li class="item-news"></li>
     <li class="item-novel tombstone">
-      <img class="cover" src="" alt="" width="100" height="200">
+      <img class="cover" src="img/bg_cat.png" alt="" width="100" height="200">
       <div class="desc">
         <p></p>
         <p></p>
         <p></p>
-      </div>
-      <div class="meta">
-        <time class="posted-date"></time>
+        <p></p>
+        <div class="meta">
+          <time class="posted-date"></time>
+        </div>
       </div>
     </li>
     <li class="item-news tombstone">
@@ -210,7 +211,7 @@ GetData.prototype = {
           items[i] = randomItem(this.nextItem_++);
         }
         resolve(Promise.all(items));
-      }.bind(this), 1000 /* Simulated 1 second round trip time */ );
+      }.bind(this), 1500 /* Simulated 1 second round trip time */ );
     }.bind(this));
   },
 
