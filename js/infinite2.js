@@ -261,7 +261,15 @@
             continue;
           }
         }
-        var node = this.items_[i].data ? this.source_.render(this.items_[i].data, unusedNodes.pop()) : this.getTombstone();
+        var node
+        var isReplace = false
+        if (this.items_[i].data) {
+          node = this.source_.render(this.items_[i].data, unusedNodes.pop())
+        } else {
+          node = this.getTombstone()
+        }
+        // var node = this.items_[i].data ? this.source_.render(this.items_[i].data, unusedNodes.pop()) : this.getTombstone();
+
         // Maybe don't do this if it's already attached?
         node.style.position = 'absolute';
         this.items_[i].top = -1;
@@ -359,6 +367,7 @@
       var itemsNeeded = this.lastAttachedItem_ - this.loadedItems_;
       if (itemsNeeded <= 0)
         return;
+      console.timeEnd('render:')
       this.requestInProgress_ = true;
       this.source_.fetch(itemsNeeded).then(this.addContent.bind(this));
     },

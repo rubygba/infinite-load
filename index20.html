@@ -251,11 +251,10 @@ function GetData() {
 GetData.prototype = {
   fetch: function(count) {
     // Fetch at least 10 or count more objects for display.
-    count = Math.max(10, count);
+    count = Math.max(20, count);
     return new Promise(function(resolve, reject) {
       // Assume 50 ms per item.
       setTimeout(function() {
-        console.time('render:')
         var items = [];
         for (var i = 0; i < Math.abs(count); i++) {
           items[i] = randomItem(this.nextItem_++);
@@ -299,12 +298,32 @@ GetData.prototype = {
   },
 };
 
-document.addEventListener('DOMContentLoaded', function() {
-  window.scroller =
-    new InfiniteScroller(
-      document.querySelector('#chat-timeline'),
-      new GetData()
-    );
+
+document.addEventListener('DOMContentLoaded', add20);
+
+function add20() {
+  var source_ = new GetData()
+  // var tombstone_ = document.querySelector("#temp > .item-novel.tombstone");
+  var messageTemplate_ = document.querySelector("#temp > .a-item:not(.tombstone)");
+  var nodes = document.createElement('DIV');
+  console.time('render:')
+  source_.fetch(20).then(items => {
+    console.log(items.length)
+    for (var i = 0; i < items.length; i++) {
+      nodes.appendChild(messageTemplate_.cloneNode(true))
+    }
+    document.getElementById('chat-timeline').appendChild(nodes);
+
+    console.timeEnd('render:')
+  })
+}
+
+// document.addEventListener('DOMContentLoaded', function() {
+//   window.scroller =
+//     new InfiniteScroller(
+//       document.querySelector('#chat-timeline'),
+//       new GetData()
+//     );
 
   // var stats = new Stats();
   // var domPanel = new Stats.Panel('DOM Nodes', '#0ff', '#002');
@@ -320,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
   //     setTimeout(timeoutFunc, TIMEOUT);
   //   });
   // }, TIMEOUT);
-});
+// });
 
 // var then = Date.now()
 // var count = 0
