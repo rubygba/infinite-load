@@ -29,6 +29,7 @@
   // The animation interval (in ms) for fading in content from tombstones.
   var ANIMATION_DURATION_MS = 200;
 
+  // EXAMPLE Class
   scope.InfiniteScrollerSource = function() {
   }
 
