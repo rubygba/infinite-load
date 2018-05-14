@@ -18,7 +18,7 @@
 (function(scope) {
 
   // Number of items to instantiate beyond current view in the scroll direction.
-  var RUNWAY_ITEMS = 50;
+  var RUNWAY_ITEMS = 20;
 
   // Number of items to instantiate beyond current view in the opposite direction.
   var RUNWAY_ITEMS_OPPOSITE = 10;
@@ -346,7 +346,6 @@
       }
 
       this.maybeRequestContent();
-
     },
 
     /**
