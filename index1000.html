@@ -17,7 +17,7 @@
   <meta name="x5-orientation" content="portrait">
   <meta name="x5-fullscreen" content="true">
   <meta name="x5-page-mode" content="app">
-  <title>无限滚动</title>
+  <title>1000条静态信息流</title>
   <!-- <link rel="stylesheet" href="css/index.css"> -->
   <link rel="stylesheet" href="css/reset.css">
   <link rel="stylesheet" href="css/item.css">
@@ -28,13 +28,7 @@
         recalc = function() {
           var clientWidth = docEl.clientWidth;
           if (!clientWidth) return;
-          if (clientWidth >= 750 && clientWidth <= 1000) {
-            docEl.style.fontSize = 100 + 'px';
-          } else if (clientWidth >= 1000) {
-            docEl.style.fontSize = 100 * (1000 / 750) + 'px';
-          } else {
-            docEl.style.fontSize = 100 * (clientWidth / 750) + 'px';
-          }
+          docEl.style.fontSize = 100 * (clientWidth / 750) + 'px';
         };
       if (!doc.addEventListener) return;
       win.addEventListener(resizeEvt, recalc, false);
@@ -172,6 +166,7 @@
   <!-- <div class="list">
     <ul id="timeline">
     </ul> -->
+    <div class="model"></div>
   </div>
 
   <script src="js/promise-polyfill.js"></script>
@@ -218,6 +213,7 @@ function randomItem(id) {
       id: id,
       avatar: Math.floor(Math.random()*NUM_AVATARS),
       self: Math.random() < 0.1,
+      img: '//placekitten.com/' + Math.floor(Math.random()*50+100) + '/' + Math.floor(Math.random()*100+200),
       image: Math.random() < 1.0 / 20 ? Math.floor(Math.random()*NUM_IMAGES) : '',
       time: new Date(Math.floor(INIT_TIME + id*20*1000 + Math.random()*20*1000)),
       message: pickRandom(MESSAGES)
@@ -261,7 +257,7 @@ GetData.prototype = {
           items[i] = randomItem(this.nextItem_++);
         }
         resolve(Promise.all(items));
-      }.bind(this), 1500 /* Simulated 1 second round trip time */ );
+      }.bind(this), 1000 /* Simulated 1 second round trip time */ );
     }.bind(this));
   },
 
@@ -273,6 +269,8 @@ GetData.prototype = {
     // TODO: Different style?
     div = div || this.messageTemplate_.cloneNode(true);
     div.dataset.id = item.id;
+    div.querySelector('.placeholder-img').src = item.img;
+    div.querySelector('.author').textContent = item.time.toString();
     // 填充内容
     // div.querySelector('.avatar').src = 'images/avatar' + item.avatar + '.jpg';
     // div.querySelector('.bubble p').textContent = item.message;
@@ -301,39 +299,50 @@ GetData.prototype = {
 
 
 var stats = new Stats();
-var domPanel = new Stats.Panel('DOM Nodes', '#0ff', '#002');
-var domPanel2 = new Stats.Panel('FPS Test', '#ff8', '#221');
+// var domPanel = new Stats.Panel('Time MS', '#0ff', '#002');
+var domPanel = new Stats.Panel('DOM nodes', '#0ff', '#002');
+stats.dom.style.position = 'relative';
+stats.dom.style.float = 'left';
+
+var stats2 = new Stats();
+var domPanel2 = new Stats.Panel('FPS', '#ff8', '#221');
+stats2.dom.style.position = 'relative';
+stats2.dom.style.float = 'left';
 
 document.addEventListener('DOMContentLoaded', function() {
   var source_ = new GetData()
   // var tombstone_ = document.querySelector("#temp > .item-novel.tombstone");
   var messageTemplate_ = document.querySelector("#temp > .a-item:not(.tombstone)");
-  var nodes = document.createElement('DIV');
-  console.time('render:')
+  // var nodes = document.createElement('DIV');
   source_.fetch(1000).then(items => {
     console.log(items.length)
     for (var i = 0; i < items.length; i++) {
-      nodes.appendChild(messageTemplate_.cloneNode(true))
+      var div = messageTemplate_.cloneNode(true);
+      div.dataset.id = items[i].id;
+      div.querySelector('.placeholder-img').src = items[i].img;
+      div.querySelector('.author').textContent = items[i].time.toString();
+      // nodes.appendChild(messageTemplate_.cloneNode(true))
+      document.getElementById('chat-timeline').appendChild(div);
     }
-    document.getElementById('chat-timeline').appendChild(nodes);
 
-    console.timeEnd('render:')
   })
 
-stats.addPanel(domPanel2);
-stats.addPanel(domPanel);
-stats.showPanel(3);
-document.body.appendChild(stats.dom);
-// var TIMEOUT = 100;
-// setTimeout(function timeoutFunc() {
-//   // Only update DOM node graph when we have time to spare to call
-//   // numDomNodes(), which is a fairly expensive function.
-//   requestIdleCallback(function() {
-//     domPanel2.update(g_fps, 60);
-//     domPanel.update(numDomNodes(document.body), 1500);
-//     setTimeout(timeoutFunc, TIMEOUT);
-//   });
-// }, TIMEOUT);
+  stats.addPanel(domPanel);
+  stats2.addPanel(domPanel2);
+  stats.showPanel(3);
+  stats2.showPanel(3);
+  document.querySelector('.model').appendChild(stats2.dom);
+  document.querySelector('.model').appendChild(stats.dom);
+  var TIMEOUT = 100;
+  setTimeout(function timeoutFunc() {
+    // Only update DOM node graph when we have time to spare to call
+    // numDomNodes(), which is a fairly expensive function.
+    requestIdleCallback(function() {
+      // domPanel.update(numDomNodes(document.body), 3000);
+      // domPanel2.update(g_fps, 60);
+      setTimeout(timeoutFunc, TIMEOUT);
+    });
+  }, TIMEOUT);
 });
 
 function numDomNodes(node) {
@@ -356,6 +365,7 @@ requestAnimationFrame(function(){
     var fps = Math.round(100000/ms) / 100
     g_fps = fps
     domPanel2.update(g_fps, 60);
+    domPanel.update(numDomNodes(document.body), 3000);
     // domPanel.update(numDomNodes(document.body), 1500);
     // console.log(`count: ${count}\t${ms}ms/frame\t${fps}fps`)
   }
